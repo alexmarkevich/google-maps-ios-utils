@@ -31,21 +31,21 @@
         NSUInteger count = cluster.items.count;
         if (count > 1) {
             marker.icon = [self generateClusterIconWithCount:count];
+            marker.position = cluster.position;
         }
         else {
             marker.icon = cluster.marker.icon;
+            marker.position = cluster.marker.position;
+            marker.title = cluster.marker.title;
         }
-        
         marker.userData = cluster.marker.userData;
-        
-        marker.position = cluster.marker.position;
         marker.map = _map;
     }
 }
 
 - (UIImage*)generateClusterIconWithCount:(NSUInteger)count {
     
-    int diameter = 30;
+    int diameter = 60;
     float inset = 2;
     
     CGRect rect = CGRectMake(0, 0, diameter, diameter);
@@ -56,9 +56,7 @@
     // set stroking color and draw circle
     [[UIColor colorWithRed:1 green:1 blue:1 alpha:0.8] setStroke];
     
-    if (count > 100) [[UIColor orangeColor] setFill];
-    else if (count > 10) [[UIColor yellowColor] setFill];
-    else [[UIColor colorWithRed:0.0/255.0 green:100.0/255.0 blue:255.0/255.0 alpha:1] setFill];
+    [[UIColor colorWithRed:0.0/255.0 green:100.0/255.0 blue:255.0/255.0 alpha:1] setFill];
 
     CGContextSetLineWidth(ctx, inset);
 
@@ -110,7 +108,7 @@
 
     CTLineRef line = CTLineCreateWithAttributedString(
             (__bridge CFAttributedStringRef)stringToDraw);
-    CGContextSetTextPosition(ctx, midWidth, 12);
+    CGContextSetTextPosition(ctx, midWidth, (diameter - suggestedSize.height) / 2 + inset);
     CTLineDraw(line, ctx);
 
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();

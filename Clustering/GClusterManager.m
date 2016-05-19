@@ -46,14 +46,7 @@
     }
 }
 
-- (void)mapView:(GMSMapView *)mapView didChangeCameraPosition:(GMSCameraPosition *)position {
-    if ([self delegate] != nil
-        && [self.delegate respondsToSelector:@selector(mapView:didChangeCameraPosition:)]) {
-        [self.delegate mapView:mapView didChangeCameraPosition:position];
-    }
-}
-
-- (void)mapView:(GMSMapView *)mapView idleAtCameraPosition:(GMSCameraPosition *)cameraPosition {
+- (void)mapView:(GMSMapView *)mapView didChangeCameraPosition:(GMSCameraPosition *)cameraPosition {
     assert(mapView == _mapView);
     
     // Don't re-compute clusters if the map has just been panned/tilted/rotated.
@@ -61,7 +54,7 @@
     if (previousCameraPosition != nil && previousCameraPosition.zoom == position.zoom) {
         if ([self delegate] != nil
             && [self.delegate respondsToSelector:@selector(mapView:idleAtCameraPosition:)]) {
-            [self.delegate mapView:mapView idleAtCameraPosition:cameraPosition];
+            [self.delegate mapView:mapView didChangeCameraPosition:cameraPosition];
         }
         return;
     }
@@ -71,6 +64,13 @@
     
     if ([self delegate] != nil
         && [self.delegate respondsToSelector:@selector(mapView:idleAtCameraPosition:)]) {
+        [self.delegate mapView:mapView didChangeCameraPosition:cameraPosition];
+    }
+}
+
+- (void)mapView:(GMSMapView *)mapView idleAtCameraPosition:(GMSCameraPosition *)cameraPosition {
+    if ([self delegate] != nil
+        && [self.delegate respondsToSelector:@selector(mapView:didChangeCameraPosition:)]) {
         [self.delegate mapView:mapView idleAtCameraPosition:cameraPosition];
     }
 }
@@ -90,6 +90,7 @@
 }
 
 - (BOOL)mapView:(GMSMapView *)mapView didTapMarker:(GMSMarker *)marker {
+    [mapView setSelectedMarker:marker];
     if ([self delegate] != nil
         && [self.delegate respondsToSelector:@selector(mapView:didTapMarker:)]) {
         return [self.delegate mapView:mapView didTapMarker:marker];

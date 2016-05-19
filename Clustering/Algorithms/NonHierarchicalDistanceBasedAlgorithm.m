@@ -53,7 +53,7 @@
 - (NSSet*)getClusters:(float)zoom {
     int discreteZoom = (int) zoom;
     
-    double zoomSpecificSpan = _maxDistanceAtZoom / pow(2, discreteZoom) / 256;
+    double zoomSpecificSpan = _maxDistanceAtZoom / pow(2, discreteZoom) / 128;
     
     NSMutableSet *visitedCandidates = [[NSMutableSet alloc] init];
     NSMutableSet *results = [[NSMutableSet alloc] init];
@@ -69,8 +69,9 @@
         }
         
         GQTBounds bounds = [self createBoundsFromSpan:candidate.point span:zoomSpecificSpan];
-        NSArray *clusterItems  = [_quadTree searchWithBounds:bounds];
-        if ([clusterItems count] == 1) {
+        NSMutableArray *clusterItems = [NSMutableArray arrayWithArray:[_quadTree searchWithBounds:bounds]];
+        [clusterItems removeObjectsInArray:[visitedCandidates allObjects]];
+        if ([clusterItems count] == 1 || zoom > 15) {
             // Only the current marker is in range. Just add the single item to the results.
             [results addObject:candidate];
             [visitedCandidates addObject:candidate];
@@ -78,7 +79,7 @@
             continue;
         }
         
-        GStaticCluster *cluster = [[GStaticCluster alloc] initWithCoordinate:candidate.position andMarker:candidate.marker];
+        GStaticCluster *cluster = [[GStaticCluster alloc] initWithCoordinate:[NonHierarchicalDistanceBasedAlgorithm calculateCoordinateWithClusterItems:clusterItems] andMarker:candidate.marker];
         [results addObject:cluster];
         
         for (GQuadItem* clusterItem in clusterItems) {
@@ -107,6 +108,16 @@
 
 - (double)distanceSquared:(GQTPoint) a :(GQTPoint) b {
     return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+}
+
++ (CLLocationCoordinate2D)calculateCoordinateWithClusterItems:(NSArray *)clusterItems {
+    CLLocationDegrees latitudeSum = 0;
+    CLLocationDegrees longitudeSum = 0;
+    for (GQuadItem* item in clusterItems) {
+        latitudeSum += item.marker.position.latitude;
+        longitudeSum += item.marker.position.longitude;
+    }
+    return CLLocationCoordinate2DMake(latitudeSum / clusterItems.count, longitudeSum / clusterItems.count);
 }
 
 - (GQTBounds) createBoundsFromSpan:(GQTPoint) point span:(double) span {
